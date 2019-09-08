@@ -1,13 +1,11 @@
 <template>
   <div>
-    <ul>
-      <li v-for="song in songs" v-bind:key="song.id" v-on:click="playSong(song.id)">{{ song.title }}</li>
-    </ul>
+    <playlist v-bind:songs="songs" />
   </div>
 </template>
 
 <script>
-import Logo from '~/components/Logo.vue';
+import Playlist from '~/components/Playlist.vue';
 import axios from 'axios';
 
 export default {
@@ -19,12 +17,10 @@ export default {
     };
   },
   methods: {
-    playSong: function(id) {
-      this.$store.commit('songs/add', {'title': 'test'});
-    }
+    
   },
   components: {
-    Logo
+    Playlist
   }
 }
 </script>
