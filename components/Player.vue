@@ -1,16 +1,21 @@
 <template>
   <div>
-    <h1>Player</h1>
-    <ul>
-      <li v-for="song in playlist" v-bind:key="song.id" v-on:click="play(song.id)">{{ song.title }}</li>
-    </ul>
-    <button v-on:click="play">Play</button>
+    <a-affix :style="{ position: 'absolute', bottom: 0, left: 0}">
+      <h1>Player: {{ this.playing.songId }}</h1>
+      <p>{{ this.playing.time }}</p>
+      <ul>
+        <li v-for="song in playlist" v-bind:key="song.id" v-on:click="play(song.id)">{{ song.title }}</li>
+      </ul>
+      <button v-on:click="play" v-if="status=='play'">Play</button>
+      <button v-on:click="pause" v-if="status=='pause'">Pause</button>
+    </a-affix>
   </div>
 </template>
 
 <script>
 import {Howl, Howler} from 'howler';
 var player = {};
+var timer = null;
 
 export default {
   created: function() {
@@ -25,7 +30,11 @@ export default {
   data: function() {
     return {
       playlist: [],
-      playing: null,
+      status: null,
+      playing: {
+        songId: null,
+        time: 0,
+      },
     }
   },
   methods: {
@@ -34,8 +43,10 @@ export default {
         return song.id == songId;
       });
 
-      if(this.playing) {
-        player[this.playing].stop();
+      if(this.playing.songId) {
+        if(this.playing.songId != songId) {
+          player[this.playing.songId].stop();
+        }
       }
 
       if(player[songId]) {
@@ -53,12 +64,28 @@ export default {
           },
           onseek: function() {
             console.log('seek');
+          },
+          onstop: function() {
+            clearInterval(timer);
           }
         });
-
         player[songId].play();
       }
-      this.playing = songId;
+    
+      timer = setInterval(function(){
+        this.$set(this.playing, 'time', player[songId].seek());
+      }.bind(this), 1000);
+      this.$set(this.playing, 'songId', songId);
+      this.status = 'play';
+    },
+    stop: function() {
+
+    },
+    pause: function() {
+      if(this.playing.songId) {
+        this.status = 'pause';
+        player[this.playing.songId].pause();
+      }
     },
     addPlaylist: function(songs) {
       this.playlist = songs;
