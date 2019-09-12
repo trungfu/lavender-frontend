@@ -6,8 +6,8 @@
       <ul>
         <li v-for="song in playlist" v-bind:key="song.id" v-on:click="play(song.id)">{{ song.title }}</li>
       </ul>
-      <button v-on:click="play" v-if="status=='play'">Play</button>
-      <button v-on:click="pause" v-if="status=='pause'">Pause</button>
+      <button v-on:click="resume" v-if="canPlay">Play</button>
+      <button v-on:click="pause" v-if="canPause">Pause</button>
     </a-affix>
   </div>
 </template>
@@ -47,6 +47,9 @@ export default {
         if(this.playing.songId != songId) {
           player[this.playing.songId].stop();
         }
+        else {
+          return;
+        }
       }
 
       if(player[songId]) {
@@ -65,6 +68,9 @@ export default {
           onseek: function() {
             console.log('seek');
           },
+          onend: function() {
+            clearInterval(timer);
+          },
           onstop: function() {
             clearInterval(timer);
           }
@@ -73,8 +79,9 @@ export default {
       }
     
       timer = setInterval(function(){
-        this.$set(this.playing, 'time', player[songId].seek());
+        this.$set(this.playing, 'time', player[this.playing.songId].seek());
       }.bind(this), 1000);
+
       this.$set(this.playing, 'songId', songId);
       this.status = 'play';
     },
@@ -87,8 +94,30 @@ export default {
         player[this.playing.songId].pause();
       }
     },
+    resume: function() {
+      if(this.playing.songId) {
+        this.status = 'play';
+        player[this.playing.songId].play();
+      }
+    },
     addPlaylist: function(songs) {
       this.playlist = songs;
+    }
+  },
+  computed: {
+    canPlay: function() {
+      if(this.status == 'pause') {
+        return true;
+      }
+
+      return false;
+    },
+    canPause: function() {
+      if(this.status == 'play') {
+        return true;
+      }
+
+      return false;
     }
   }
 }
