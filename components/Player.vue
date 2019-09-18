@@ -1,19 +1,36 @@
 <template>
   <div>
-    <a-affix :style="{ position: 'absolute', bottom: 0, left: 0}">
-      <h1>Player: {{ this.playing.songId }}</h1>
-      <p>{{ this.playing.time }}</p>
-      <ul>
-        <li v-for="song in playlist" v-bind:key="song.id" v-on:click="play(song.id)">{{ song.title }}</li>
-      </ul>
-      <button v-on:click="resume" v-if="canPlay">Play</button>
-      <button v-on:click="pause" v-if="canPause">Pause</button>
+    <a-affix class="player">
+      <a-row>
+        <a-col :span="4">
+          <div class="player-control">
+            <button v-if="canPrevious" v-on:click="previous">Pre</button>
+            <button v-if="canPlay" v-on:click="resume">Play</button>
+            <button v-if="canPause" v-on:click="pause">Pause</button>
+            <button v-if="canNext" v-on:click="next">Next</button>
+          </div>
+        </a-col>
+        <a-col :span="15">
+          <p>Player {{ this.currentSongIndex }}</p>
+          <p>{{ this.playing.time }}</p>
+        </a-col>
+        <a-col :span="5">
+          <div class="playlist">
+            <ul>
+              <li v-for="song in playlist" v-bind:key="song.id" v-on:click="play(song.id)">{{ song.title }}</li>
+            </ul>
+          </div>
+        </a-col>
+      </a-row>
+      
     </a-affix>
   </div>
 </template>
 
 <script>
 import {Howl, Howler} from 'howler';
+import _ from 'lodash';
+
 var player = {};
 var timer = null;
 
@@ -32,7 +49,7 @@ export default {
       playlist: [],
       status: null,
       playing: {
-        songId: null,
+        song: null,
         time: 0,
       },
     }
@@ -43,9 +60,9 @@ export default {
         return song.id == songId;
       });
 
-      if(this.playing.songId) {
-        if(this.playing.songId != songId) {
-          player[this.playing.songId].stop();
+      if(_.get(this.playing, 'song.id')) {
+        if(this.playing.song.id != songId) {
+          player[this.playing.song.id].stop();
         }
         else {
           return;
@@ -65,9 +82,6 @@ export default {
           onplayerror: function(id, message) {
             console.log(message);
           },
-          onseek: function() {
-            console.log('seek');
-          },
           onend: function() {
             clearInterval(timer);
           },
@@ -78,26 +92,39 @@ export default {
         player[songId].play();
       }
     
+      this.$set(this.playing, 'song', song);
+
       timer = setInterval(function(){
-        this.$set(this.playing, 'time', player[this.playing.songId].seek());
+        this.$set(this.playing, 'time', player[this.playing.song.id].seek());
       }.bind(this), 1000);
 
-      this.$set(this.playing, 'songId', songId);
       this.status = 'play';
     },
     stop: function() {
 
     },
     pause: function() {
-      if(this.playing.songId) {
+      if(this.playing.song.id) {
         this.status = 'pause';
-        player[this.playing.songId].pause();
+        player[this.playing.song.id].pause();
       }
     },
     resume: function() {
-      if(this.playing.songId) {
+      if(this.playing.song.id) {
         this.status = 'play';
-        player[this.playing.songId].play();
+        player[this.playing.song.id].play();
+      }
+    },
+    next: function() {
+      if(this.canNext) {
+        var nextSongIndex = this.currentSongIndex + 1;
+        this.play(this.playlist[nextSongIndex].id);
+      }
+    },
+    previous: function() {
+      if(this.canPrevious) {
+        var previousSongIndex = this.currentSongIndex - 1;
+        this.play(this.playlist[previousSongIndex].id);
       }
     },
     addPlaylist: function(songs) {
@@ -118,7 +145,37 @@ export default {
       }
 
       return false;
+    },
+    canNext: function() {
+      return this.currentSongIndex < this.playlist.length - 1;
+    },
+    canPrevious: function() {
+      return this.currentSongIndex >= 1;
+    },
+    currentSongIndex: function() {
+      if(!this.playing.song) {
+        return null;
+      }
+
+      return this.playlist.indexOf(this.playing.song);
     }
   }
 }
 </script>
+
+<style lang="scss">
+  .player{
+    position: absolute;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background: #204766;
+    color: #F1DEE0;
+    .playlist {
+      position: relative;
+      ul {
+        position: absolute;
+      }
+    }
+  }
+</style>
