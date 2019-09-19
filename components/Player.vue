@@ -4,10 +4,10 @@
       <a-row>
         <a-col :span="4">
           <div class="player-control">
-            <button v-if="canPrevious" v-on:click="previous">Pre</button>
-            <button v-if="canPlay" v-on:click="resume">Play</button>
-            <button v-if="canPause" v-on:click="pause">Pause</button>
-            <button v-if="canNext" v-on:click="next">Next</button>
+            <a-button type="primary" shape="circle" icon="step-backward" v-if="canPrevious" v-on:click="previous" />
+            <a-button type="primary" shape="circle" icon="play-circle" v-if="canPlay" v-on:click="resume" />
+            <a-button type="primary" shape="circle" icon="pause-circle" v-if="canPause" v-on:click="pause" />
+            <a-button type="primary" shape="circle" icon="step-forward" v-if="canNext" v-on:click="next" />
           </div>
         </a-col>
         <a-col :span="15">
@@ -15,14 +15,14 @@
           <p>{{ this.playing.time }}</p>
         </a-col>
         <a-col :span="5">
-          <div class="playlist">
-            <ul>
-              <li v-for="song in playlist" v-bind:key="song.id" v-on:click="play(song.id)">{{ song.title }}</li>
-            </ul>
-          </div>
+          <a-button v-on:click="isShowPlaylist = !isShowPlaylist" >Playlist</a-button>
         </a-col>
       </a-row>
-      
+      <div class="playlist" v-bind:class="{ open: isShowPlaylist }">
+        <ul>
+          <li v-for="song in playlist" v-bind:key="song.id" v-on:click="play(song.id)">{{ song.title }}</li>
+        </ul>
+      </div>
     </a-affix>
   </div>
 </template>
@@ -47,6 +47,7 @@ export default {
   data: function() {
     return {
       playlist: [],
+      isShowPlaylist: false,
       status: null,
       playing: {
         song: null,
@@ -84,6 +85,7 @@ export default {
           },
           onend: function() {
             clearInterval(timer);
+            this.next();
           },
           onstop: function() {
             clearInterval(timer);
@@ -169,13 +171,27 @@ export default {
     left: 0;
     bottom: 0;
     width: 100%;
-    background: #204766;
-    color: #F1DEE0;
-    .playlist {
-      position: relative;
-      ul {
-        position: absolute;
+    background: #37829A;
+    color: #C7D9DF;
+    .player-control {
+      button {
+        background: #E6AFAD;
       }
+    }
+    .playlist {
+      height: 0;
+      bottom: 100%;
+      left: 0;
+      right: 0;
+      margin-left: auto;
+      margin-right: auto;
+      width: 1024px;
+      position: absolute;
+      overflow: hidden;
+      background: #204766;
+    }
+    .playlist.open {
+      height: calc(100vh - 70px);
     }
   }
 </style>
